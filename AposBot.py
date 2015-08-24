@@ -29,9 +29,10 @@ import pycurl
 from io import BytesIO
 import arrow
 
-from AposBotSettings import KEY, HOST, PORT, NICK, IDENT, REALNAME, CHANNEL, PASSWORD, CURRENTACCOUNT, bot_mod, CHATDATABASE, COMMANDDATABASE
+from AposBotSettings import KEY, HOST, PORT, NICK, IDENT, REALNAME, CHANNEL, PASSWORD, CURRENTACCOUNT, bot_mod, \
+    CHATDATABASE, COMMANDDATABASE
 
-#TODO: Record chat statistics, save people's name. Find how active people are.
+# TODO: Record chat statistics, save people's name. Find how active people are.
 #      Make the bot be able to join and monitor multiple channels. Settings should be saved based on channels.
 
 database = {}
@@ -46,6 +47,7 @@ try:
 except:
     print ("Could not load database. \n{}".format(sys.exc_info()))
 
+
 def allowed(name, nameList):
     if len(nameList) == 0:
         return True
@@ -54,6 +56,7 @@ def allowed(name, nameList):
             return True
     return False
 
+
 def parseName(text):
     name = ""
     for i in text[1:]:
@@ -61,6 +64,7 @@ def parseName(text):
             name += i
         else:
             return name
+
 
 def getCommand(text):
     try:
@@ -71,6 +75,7 @@ def getCommand(text):
     except Exception as e:
         return ""
 
+
 def parseCommands(text, match):
     command = getCommand(text)
     if command is not "" and len(command) == len(match):
@@ -80,12 +85,15 @@ def parseCommands(text, match):
         return True
     return False
 
+
 def hello(senderName, channel, message, argument):
     whisperMessage(senderName, "Hello {}!".format(senderName))
-    
+
+
 def soultran(senderName, channel, message, argument):
     writeMessage("Soultran is the second best Sion played in the world! After Apostolique of course.", channel)
-    
+
+
 def uptime(senderName, channel, message, argument):
     buffer = BytesIO()
     c = pycurl.Curl()
@@ -107,33 +115,44 @@ def uptime(senderName, channel, message, argument):
         hourString = "hour" if (uptime.seconds // 3600) == 1 else "hours"
         minuteString = "minute" if ((uptime.seconds // 60) % 60) == 1 else "minutes"
         secondString = "second" if (uptime.seconds % 60) == 1 else "seconds"
-        
-        dateMessage = "The stream has been up for {} {}, {} {} and {} {}!".format(uptime.seconds // 3600, hourString, (uptime.seconds // 60) % 60, minuteString, (uptime.seconds % 60), secondString)
-        #print (dateMessage)
+
+        dateMessage = "The stream has been up for {} {}, {} {} and {} {}!".format(uptime.seconds // 3600, hourString,
+                                                                                  (uptime.seconds // 60) % 60,
+                                                                                  minuteString, (uptime.seconds % 60),
+                                                                                  secondString)
+        # print (dateMessage)
         writeMessage(dateMessage, channel)
     else:
         writeMessage("Stream is offline", channel)
+
+
 
 def setAccount(senderName, channel, message, argument):
     global CURRENTACCOUNT
     writeMessage("Current Account updated to: {}".format(" ".join(message)), channel)
     CURRENTACCOUNT = " ".join(message)
 
+
 def runes(senderName, channel, message, argument):
     writeMessage("Runes: http://na.op.gg/summoner/rune/userName={}".format(CURRENTACCOUNT), channel)
+
 
 def masteries(senderName, channel, message, argument):
     writeMessage("Masteries: http://na.op.gg/summoner/mastery/userName={}".format(CURRENTACCOUNT), channel)
 
+
 def profile(senderName, channel, message, argument):
     writeMessage("Profile: http://na.op.gg/summoner/userName={}".format(CURRENTACCOUNT), channel)
+
 
 def rank(senderName, channel, message, argument):
     writeMessage("{}".format(getRank(CURRENTACCOUNT)), channel)
 
+
 def roll(senderName, channel, message, argument):
     writeMessage("Dice roll: {}".format(random.randint(1, 6)), channel)
-    
+
+
 def quote(senderName, channel, message, argument):
     try:
         quoteLink = "http://www.iheartquotes.com/api/v1/random?source=oneliners&format=json&show_permalink=false&show_source=false"
@@ -142,13 +161,14 @@ def quote(senderName, channel, message, argument):
         quoteData = json.loads(quoteURL.read().decode('utf8'))
 
         quoteText = quoteData['quote'].replace("\n", "")
-        
+
         print (quoteData)
 
         writeMessage(quoteText, channel)
     except Exception as e:
         writeMessage("Can't quote right now!", channel)
-    
+
+
 def fact(senderName, channel, message, argument):
     try:
         quoteLink = "http://catfacts-api.appspot.com/api/facts?source=1"
@@ -157,15 +177,26 @@ def fact(senderName, channel, message, argument):
         quoteData = json.loads(quoteURL.read().decode('utf8'))
 
         quoteText = quoteData['facts'][0].replace("\n", "")
-        
+
         print (quoteData)
 
         writeMessage(quoteText, channel)
     except Exception as e:
         writeMessage("Can't state a fact right now!", channel)
-    
+
+
 def activity(senderName, channel, message, argument):
-    writeMessage("{} has been seen in this channel on {} different days and wrote {} chat lines.".format(senderName, database['names'][senderName]['activity'], database['names'][senderName]['lines']), channel)
+    writeMessage("{} has been seen in this channel on {} different days and wrote {} chat lines.".format(senderName,
+                                                                                                         database[
+                                                                                                             'names'][
+                                                                                                             senderName][
+                                                                                                             'activity'],
+                                                                                                         database[
+                                                                                                             'names'][
+                                                                                                             senderName][
+                                                                                                             'lines']),
+                 channel)
+
 
 def getMusic(senderName, channel, message, argument):
     with open('C:\\Users\\Apos\\Documents\\Snip\\Snip.txt', encoding='utf-8') as f:
@@ -175,8 +206,10 @@ def getMusic(senderName, channel, message, argument):
         else:
             writeMessage("No songs currently playing.", channel)
 
+
 def writeText(senderName, channel, message, argument):
     writeMessage(argument, channel);
+
 
 def start(senderName, channel, message, argument):
     global giveawayStarted
@@ -186,6 +219,7 @@ def start(senderName, channel, message, argument):
     giveawayParticipants.clear()
     giveawayStarted = True
     writeMessage("Giveaway started! Write '!enter' to participate!", channel)
+
 
 def enterGiveaway(senderName, channel, message, argument):
     global giveawayParticipants
@@ -200,15 +234,17 @@ def enterGiveaway(senderName, channel, message, argument):
     else:
         whisperMessage(senderName, "No ongoing giveaway!")
 
+
 def winner(senderName, channel, message, argument):
     global giveawayStarted
     giveawayWinner = list(giveawayParticipants.keys())[random.randint(0, len(giveawayParticipants) - 1)]
     writeMessage("Winner: {}".format(giveawayWinner), channel)
     whisperMessage(giveawayWinner, "You won! Make sure to claim your prize on twitch.tv/{}".format(channel))
-    #giveawayStarted = False
+    # giveawayStarted = False
+
 
 def addCommand(senderName, channel, message, argument):
-    print ("Adding commend!")
+    print ("Adding command!")
 
     newCommand = getCommand(" {}".format(message[0]))
     if (newCommand != ""):
@@ -235,15 +271,17 @@ def addCommand(senderName, channel, message, argument):
         writeMessage("Could not add command, proper syntax: !add !name sentence", channel)
         print ("Could not parse command to add.")
 
+
 def commandList(senderName, channel, message, argument):
     commandString = ""
     for i in allCommands:
         if allCommands[i][1] == []:
-            #print ("Command: {}".format(i))
+            # print ("Command: {}".format(i))
             commandString = "{} !{},".format(commandString, i)
-    #writeMessage(commandString, channel)
+    # writeMessage(commandString, channel)
     whisperMessage(senderName, commandString)
-    
+
+
 def getRank(name):
     try:
         url = "https://na.api.pvp.net/api/lol/na/v1.4/summoner/by-name/{}?api_key={}".format(name.lower(), KEY)
@@ -257,13 +295,13 @@ def getRank(name):
 
         jsonLeagueURL = urllib.request.urlopen(url2)
         jsonLeagueData = json.loads(jsonLeagueURL.read().decode('utf8'))
-        
+
         print (jsonLeagueData)
 
         division = jsonLeagueData["{}".format(summonerID)][0]['entries'][0]['division']
         leaguePoints = jsonLeagueData["{}".format(summonerID)][0]['entries'][0]['leaguePoints']
         tier = jsonLeagueData["{}".format(summonerID)][0]['tier']
-        
+
         if 'miniSeries' in jsonLeagueData["{}".format(summonerID)][0]['entries'][0]:
             losses = jsonLeagueData["{}".format(summonerID)][0]['entries'][0]['miniSeries']['losses']
             wins = jsonLeagueData["{}".format(summonerID)][0]['entries'][0]['miniSeries']['wins']
@@ -273,6 +311,7 @@ def getRank(name):
     except Exception as e:
         print ("------\n{}\n-------".format(e))
         return "Riot's Server didn't respond to the API request."
+
 
 def whisperMessage(username, text):
     textLen = len(text)
@@ -288,6 +327,7 @@ def whisperMessage(username, text):
     except Exception as e:
         print (e)
 
+
 def writeMessage(text, channel):
     textLen = len(text)
     last = 0
@@ -298,31 +338,32 @@ def writeMessage(text, channel):
         s.send(bytes("PRIVMSG {} :{}\r\n".format(channel, text[last:current]), 'UTF-8'))
         last = current
         current += 400
-    
-def loadCustomCommands():
 
+
+def loadCustomCommands():
     try:
         with open(COMMANDDATABASE) as fp:
             customC = json.load(fp)
         for key in customC:
-            #print ("Loading {}".format(key))
-            #print ("Text: {}".format(customC[key]))
+            # print ("Loading {}".format(key))
+            # print ("Text: {}".format(customC[key]))
             allCommands[key] = [writeText, [], customC[key], True]
     except:
         print ("Could not load database. \n{}".format(sys.exc_info()))
 
+
 def updateUserDataBase(senderName):
     global database
-    
+
     if not 'names' in database:
         database['names'] = {}
 
     currentDate = (datetime.today().date() - datetime.strptime("2014-10-05", "%Y-%m-%d").date()).days
-    
+
     if senderName in database['names']:
         print ("Yep!")
         database['names'][senderName]['lines'] = database['names'][senderName]['lines'] + 1
-        #NOTE: This code would not add activity to someone that only posts once a year on the same day of the year. Kappa.
+        # NOTE: This code would not add activity to someone that only posts once a year on the same day of the year. Kappa.
         if database['names'][senderName]['last-active'] < currentDate:
             database['names'][senderName]['activity'] = database['names'][senderName]['activity'] + 1
             database['names'][senderName]['last-active'] = currentDate
@@ -332,15 +373,16 @@ def updateUserDataBase(senderName):
         database['names'][senderName]['lines'] = 1
         database['names'][senderName]['activity'] = 1
         database['names'][senderName]['last-active'] = currentDate
-        
+
+
 def receiveData():
     global TIME
     global allCommands
     global bot_mod
     TIME = datetime.now()
-    readbuffer=""
+    readbuffer = ""
 
-    #allCommands['hello'] = [hello, [], "", False]
+    # allCommands['hello'] = [hello, [], "", False]
     allCommands['soultran'] = [soultran, bot_mod, "", False]
     allCommands['uptime'] = [uptime, [], "", False]
     allCommands['set'] = [setAccount, bot_mod, "", False]
@@ -361,30 +403,30 @@ def receiveData():
     allCommands['commands'] = [commandList, [], False]
 
     loadCustomCommands()
-    
+
     while 1:
         somebytes = s.recv(1024).decode('UTF-8')
         readbuffer += readbuffer + somebytes
         temp = str.split(readbuffer, '\r\n')
         readbuffer = temp.pop()
-        
+
         for line in temp:
-            line=str.rstrip(line)
-            line=str.split(line)
-            
+            line = str.rstrip(line)
+            line = str.split(line)
+
             if len(line) > 3:
                 if line[1] == 'PRIVMSG':
                     name = parseName(line[0])
                     print ("Message by {} in channel {}".format(name, line[2]))
-                    
+
                     if line[2][1:] == CHANNEL:
                         updateUserDataBase(name)
-                    
+
                     currentCommand = getCommand(line[3])
-                    
+
                     if currentCommand in allCommands and allowed(name, allCommands[currentCommand][1]):
                         allCommands[currentCommand][0](name, line[2], line[4:], allCommands[currentCommand][2])
-                    
+
                     try:
                         print (line)
                     except:
@@ -395,19 +437,19 @@ def receiveData():
                     bot_mod.append(line[4])
                     print (line)
                     print ("Added a mod!")
-                    #TODO: Remove mods too!
                 elif line[3] == '-o':
-                    #It should remove mods, not add them a second time.
-                    bot_mod.append(line[4])
+                    # It removes Mods now. Not so hard.
+                    bot_mod.remove(line[4])
                     print (line)
                     print ("Removed a mod!")
                 else:
                     print (line)
-            if (line[0]=="PING"):
+            if (line[0] == "PING"):
                 s.send(bytes("PONG {}\r\n".format(line[1]), 'UTF-8'))
 
+
 def receiveTeamData():
-    junkbuffer=""
+    junkbuffer = ""
 
     while 1:
         junkbytes = t.recv(1024).decode('UTF-8')
@@ -418,24 +460,27 @@ def receiveTeamData():
         for line in junkTemp:
             line = str.rstrip(line)
             line = str.split(line)
-            if (line[0]=="PING"):
+            if (line[0] == "PING"):
                 print ("PING PONG")
                 t.send(bytes("PONG {}\r\n".format(line[1]), 'UTF-8'))
 
-s=socket.socket( )
+
+s = socket.socket()
 s.connect((HOST, PORT))
 s.send(bytes("PASS oauth:{}\r\n".format(PASSWORD), 'UTF-8'))
 s.send(bytes("NICK {}\r\n".format(NICK), 'UTF-8'))
 s.send(bytes("USER {} {} bla :{}\r\n".format(IDENT, HOST, REALNAME), 'UTF-8'))
+s.send(bytes("CAP REQ :twitch.tv/commands\r\n", 'UTF-8'))
+s.send(bytes("CAP REQ :twitch.tv/membership\r\n", 'UTF-8'))
 s.send(bytes("JOIN #{}\r\n".format(CHANNEL), 'UTF-8'))
 
-t=socket.socket()
+t = socket.socket()
 t.connect(("199.9.253.119", 443))
 t.send(bytes("PASS oauth:{}\r\n".format(PASSWORD), 'UTF-8'))
 t.send(bytes("NICK {}\r\n".format(NICK), 'UTF-8'))
 t.send(bytes("USER {} {} bla :{}\r\n".format(IDENT, HOST, REALNAME), 'UTF-8'))
-#t.send(bytes("JOIN #{}\r\n".format("_apostolique_1435426130074"), 'UTF-8'))
-#t.send(bytes("PRIVMSG #jtv :/w {} {}\r\n".format("apostolique", "Hello World!"), 'UTF-8'))
+# t.send(bytes("JOIN #{}\r\n".format("_apostolique_1435426130074"), 'UTF-8'))
+# t.send(bytes("PRIVMSG #jtv :/w {} {}\r\n".format("apostolique", "Hello World!"), 'UTF-8'))
 
 socketThread = Thread(target=receiveData)
 socketThread.start()
@@ -466,7 +511,7 @@ while 1:
         except:
             print ("Could not save. \n{}".format(sys.exc_info()))
     elif userInput == "uptime":
-        uptime("","","")
+        uptime("", "", "")
     elif userInput == "add":
         print("Mod to add?")
         userInput = input()
