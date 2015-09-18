@@ -13,24 +13,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with TwitchAposBot.  If not, see <http://www.gnu.org/licenses/>."""
 
-from msvcrt import getch
 import socket
-import string
-import time
 import sys
-import select
 from datetime import datetime
 from threading import Thread
 import urllib.request
 import simplejson as json
 import random
-import shelve
 import pycurl
 from io import BytesIO
 import arrow
 
 from AposBotSettings import KEY, HOST, PORT, NICK, IDENT, REALNAME, CHANNEL, PASSWORD, CURRENTACCOUNT, bot_mod, \
     CHATDATABASE, COMMANDDATABASE
+import threading
 
 # TODO: Record chat statistics, save people's name. Find how active people are.
 #      Make the bot be able to join and monitor multiple channels. Settings should be saved based on channels.
@@ -46,6 +42,16 @@ try:
         database = json.load(fp)
 except:
     print ("Could not load database. \n{}".format(sys.exc_info()))
+    f = open(CHATDATABASE, "w")
+
+
+def set_interval(func, sec):
+    def func_wrapper():
+        set_interval(func, sec)
+        func()
+    timedthread = threading.Timer(sec, func_wrapper)
+    timedthread.start()
+    return t
 
 
 def allowed(name, nameList):
@@ -279,7 +285,7 @@ def commandList(senderName, channel, message, argument):
             # print ("Command: {}".format(i))
             commandString = "{} !{},".format(commandString, i)
     # writeMessage(commandString, channel)
-    whisperMessage(senderName, commandString)
+    writeMessage(commandString, channel)
 
 
 def getRank(name):
@@ -436,7 +442,7 @@ def receiveData():
                 elif line[3] == '+o':
                     bot_mod.append(line[4])
                     print (line)
-                    print ("Added a mod!")
+                    print ("Added " + line[4] +  " as a mod!")
                 elif line[3] == '-o':
                     # It removes Mods now. Not so hard.
                     bot_mod.remove(line[4])
@@ -497,6 +503,7 @@ while 1:
                 json.dump(database, fp)
         except:
             print ("Could not save. \n{}".format(sys.exc_info()))
+
         try:
             s.close()
             t.close()
