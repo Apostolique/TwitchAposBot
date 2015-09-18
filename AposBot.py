@@ -517,6 +517,8 @@ while 1:
                 json.dump(database, fp)
         except:
             print ("Could not save. \n{}".format(sys.exc_info()))
+    elif userInput == "load":
+        loadCustomCommands()
     elif userInput == "uptime":
         uptime("", "", "")
     elif userInput == "add":
