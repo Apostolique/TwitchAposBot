@@ -21,5 +21,6 @@ PASSWORD="lalalalalalala" #From http://twitchapps.com/tmi/ without oauth:
 CURRENTACCOUNT = "apostolique"
 CHATDATABASE = "chatData.json"
 COMMANDDATABASE = "customCommands.json"
+REGEXDATABASE = "regexDatabase.json"
 
 bot_mod = ["apostolique"]
