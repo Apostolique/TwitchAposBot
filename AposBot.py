@@ -14,6 +14,7 @@ You should have received a copy of the GNU General Public License
 along with TwitchAposBot.  If not, see <http://www.gnu.org/licenses/>."""
 
 import socket
+import re
 import sys
 from datetime import datetime
 from threading import Thread
@@ -25,7 +26,7 @@ from io import BytesIO
 import arrow
 
 from AposBotSettings import KEY, HOST, PORT, NICK, IDENT, REALNAME, CHANNEL, PASSWORD, CURRENTACCOUNT, bot_mod, \
-    CHATDATABASE, COMMANDDATABASE
+    CHATDATABASE, COMMANDDATABASE, REGEXDATABASE
 import threading
 
 # TODO: Record chat statistics, save people's name. Find how active people are.
@@ -33,6 +34,7 @@ import threading
 
 database = {}
 allCommands = {}
+allRegex = {}
 
 giveawayStarted = False
 giveawayParticipants = {}
@@ -357,6 +359,20 @@ def loadCustomCommands():
     except:
         print ("Could not load database. \n{}".format(sys.exc_info()))
 
+def loadRegex():
+    try:
+        with open(REGEXDATABASE) as fp:
+            customC = json.load(fp)
+        for reg in range(0,len(customC)):
+            # print (customC[reg])
+            # print ("Loading {}".format(key))
+            # print ("Text: {}".format(customC[key]))
+            allRegex[reg] = [writeText, [], customC[reg], True]
+    except:
+        print ("Could not load database. \n{}".format(sys.exc_info()))
+
+
+
 
 def updateUserDataBase(senderName):
     global database
@@ -384,6 +400,7 @@ def updateUserDataBase(senderName):
 def receiveData():
     global TIME
     global allCommands
+    global allRegex
     global bot_mod
     TIME = datetime.now()
     readbuffer = ""
@@ -409,6 +426,8 @@ def receiveData():
     allCommands['commands'] = [commandList, [], False]
 
     loadCustomCommands()
+    loadRegex()
+    # reg = re.compile("^(?=.*?regex).*$")
 
     while 1:
         somebytes = s.recv(1024).decode('UTF-8')
@@ -429,10 +448,43 @@ def receiveData():
                         updateUserDataBase(name)
 
                     currentCommand = getCommand(line[3])
+                    currentMessage = line[3]
 
                     if currentCommand in allCommands and allowed(name, allCommands[currentCommand][1]):
                         allCommands[currentCommand][0](name, line[2], line[4:], allCommands[currentCommand][2])
-
+                    else:
+                        for exp in range(0,len(allRegex)):
+                            flagString = allRegex[exp][2]['flags']
+                            flags = None
+                            for f in range(0,len(flagString)):
+                                print (flagString[f])
+                                if flagString[f] == "m":
+                                    if flags == None:
+                                        flags = re.MULTILINE
+                                    else:
+                                        flags = flags | re.MULTILINE
+                                if flagString[f] == "i":
+                                    if flags == None:
+                                        flags = re.IGNORECASE
+                                    else:
+                                        flags = flags | re.IGNORECASE
+                                if flagString[f] == "s":
+                                    if flags == None:
+                                        flags = re.DOTALL
+                                    else:
+                                        flags = flags | re.DOTALL
+                                if flagString[f] == "u":
+                                    if flags == None:
+                                        flags = re.UNICODE
+                                    else:
+                                        flags = flags | re.UNICODE
+                            if flags != None:
+                                regToTest = re.compile(allRegex[exp][2]['command'], flags)
+                            else:
+                                regToTest = re.compile(allRegex[exp][2]['command'])
+                            answer = allRegex[exp][2]['answer']
+                            if regToTest.match(currentMessage):
+                                writeMessage(answer, line[2])
                     try:
                         print (line)
                     except:
