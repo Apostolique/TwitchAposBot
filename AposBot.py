@@ -1,15 +1,12 @@
 """This file is part of TwitchAposBot.
-
 TwitchAposBot is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
-
 TwitchAposBot is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
-
 You should have received a copy of the GNU General Public License
 along with TwitchAposBot.  If not, see <http://www.gnu.org/licenses/>."""
 
@@ -32,6 +29,8 @@ import threading
 # TODO: Record chat statistics, save people's name. Find how active people are.
 #      Make the bot be able to join and monitor multiple channels. Settings should be saved based on channels.
 
+print ("Starting")
+
 database = {}
 allCommands = {}
 allRegex = {}
@@ -42,10 +41,10 @@ giveawayParticipants = {}
 try:
     with open(CHATDATABASE) as fp:
         database = json.load(fp)
+    print ("Database loaded")
 except:
     print ("Could not load database. \n{}".format(sys.exc_info()))
     f = open(CHATDATABASE, "w")
-
 
 def set_interval(func, sec):
     def func_wrapper():
@@ -55,7 +54,6 @@ def set_interval(func, sec):
     timedthread.start()
     return t
 
-
 def allowed(name, nameList):
     if len(nameList) == 0:
         return True
@@ -64,7 +62,6 @@ def allowed(name, nameList):
             return True
     return False
 
-
 def parseName(text):
     name = ""
     for i in text[1:]:
@@ -72,7 +69,6 @@ def parseName(text):
             name += i
         else:
             return name
-
 
 def getCommand(text):
     try:
@@ -83,7 +79,6 @@ def getCommand(text):
     except Exception as e:
         return ""
 
-
 def parseCommands(text, match):
     command = getCommand(text)
     if command is not "" and len(command) == len(match):
@@ -93,19 +88,16 @@ def parseCommands(text, match):
         return True
     return False
 
-
 def hello(senderName, channel, message, argument):
     whisperMessage(senderName, "Hello {}!".format(senderName))
-
 
 def soultran(senderName, channel, message, argument):
     writeMessage("Soultran is the second best Sion played in the world! After Apostolique of course.", channel)
 
-
 def uptime(senderName, channel, message, argument):
     buffer = BytesIO()
     c = pycurl.Curl()
-    c.setopt(c.URL, 'https://api.twitch.tv/kraken/streams/{}'.format(channel[1:]))
+    c.setopt(c.URL, 'https://api.twitch.tv/kraken/streams/{}?oauth_token={}'.format(channel[1:], PASSWORD))
     c.setopt(c.WRITEDATA, buffer)
     c.perform()
     c.close()
@@ -133,49 +125,40 @@ def uptime(senderName, channel, message, argument):
     else:
         writeMessage("Stream is offline", channel)
 
-
-
 def setAccount(senderName, channel, message, argument):
     global CURRENTACCOUNT
     writeMessage("Current Account updated to: {}".format(" ".join(message)), channel)
     CURRENTACCOUNT = " ".join(message)
 
-
 def runes(senderName, channel, message, argument):
     writeMessage("Runes: http://na.op.gg/summoner/rune/userName={}".format(CURRENTACCOUNT), channel)
-
 
 def masteries(senderName, channel, message, argument):
     writeMessage("Masteries: http://na.op.gg/summoner/mastery/userName={}".format(CURRENTACCOUNT), channel)
 
-
 def profile(senderName, channel, message, argument):
     writeMessage("Profile: http://na.op.gg/summoner/userName={}".format(CURRENTACCOUNT), channel)
-
 
 def rank(senderName, channel, message, argument):
     writeMessage("{}".format(getRank(CURRENTACCOUNT)), channel)
 
-
 def roll(senderName, channel, message, argument):
     writeMessage("Dice roll: {}".format(random.randint(1, 6)), channel)
 
-
 def quote(senderName, channel, message, argument):
     try:
-        quoteLink = "http://www.iheartquotes.com/api/v1/random?source=oneliners&format=json&show_permalink=false&show_source=false"
+        quoteLink = "http://api.forismatic.com/api/1.0/?method=getQuote&format=json&lang=en"
 
         quoteURL = urllib.request.urlopen(quoteLink)
         quoteData = json.loads(quoteURL.read().decode('utf8'))
 
-        quoteText = quoteData['quote'].replace("\n", "")
+        quoteText = quoteData['quoteText'].replace("\n", "")
 
         print (quoteData)
 
         writeMessage(quoteText, channel)
     except Exception as e:
         writeMessage("Can't quote right now!", channel)
-
 
 def fact(senderName, channel, message, argument):
     try:
@@ -192,7 +175,6 @@ def fact(senderName, channel, message, argument):
     except Exception as e:
         writeMessage("Can't state a fact right now!", channel)
 
-
 def activity(senderName, channel, message, argument):
     writeMessage("{} has been seen in this channel on {} different days and wrote {} chat lines.".format(senderName,
                                                                                                          database[
@@ -205,19 +187,20 @@ def activity(senderName, channel, message, argument):
                                                                                                              'lines']),
                  channel)
 
-
 def getMusic(senderName, channel, message, argument):
-    with open('C:\\Users\\Apos\\Documents\\Snip\\Snip.txt', encoding='utf-8') as f:
-        content = f.readlines()
-        if len(content) > 0:
-            writeMessage(content[0], channel)
-        else:
-            writeMessage("No songs currently playing.", channel)
-
+    try:
+        with open('C:\\Users\\Apos\\Documents\\Snip\\Snip.txt', encoding='utf-8') as f:
+            content = f.readlines()
+            if len(content) > 0:
+                writeMessage(content[0], channel)
+            else:
+                writeMessage("No songs currently playing.", channel)
+    except:
+        writeMessage("Error! Song not setup.", channel)
+        print ("Error! Song not setup.")
 
 def writeText(senderName, channel, message, argument):
     writeMessage(argument, channel);
-
 
 def start(senderName, channel, message, argument):
     global giveawayStarted
@@ -227,7 +210,6 @@ def start(senderName, channel, message, argument):
     giveawayParticipants.clear()
     giveawayStarted = True
     writeMessage("Giveaway started! Write '!enter' to participate!", channel)
-
 
 def enterGiveaway(senderName, channel, message, argument):
     global giveawayParticipants
@@ -242,14 +224,12 @@ def enterGiveaway(senderName, channel, message, argument):
     else:
         whisperMessage(senderName, "No ongoing giveaway!")
 
-
 def winner(senderName, channel, message, argument):
     global giveawayStarted
     giveawayWinner = list(giveawayParticipants.keys())[random.randint(0, len(giveawayParticipants) - 1)]
     writeMessage("Winner: {}".format(giveawayWinner), channel)
     whisperMessage(giveawayWinner, "You won! Make sure to claim your prize on twitch.tv/{}".format(channel))
     # giveawayStarted = False
-
 
 def addCommand(senderName, channel, message, argument):
     print ("Adding command!")
@@ -279,7 +259,6 @@ def addCommand(senderName, channel, message, argument):
         writeMessage("Could not add command, proper syntax: !add !name sentence", channel)
         print ("Could not parse command to add.")
 
-
 def commandList(senderName, channel, message, argument):
     commandString = ""
     for i in allCommands:
@@ -288,7 +267,6 @@ def commandList(senderName, channel, message, argument):
             commandString = "{} !{},".format(commandString, i)
     # writeMessage(commandString, channel)
     writeMessage(commandString, channel)
-
 
 def getRank(name):
     try:
@@ -320,7 +298,6 @@ def getRank(name):
         print ("------\n{}\n-------".format(e))
         return "Riot's Server didn't respond to the API request."
 
-
 def whisperMessage(username, text):
     textLen = len(text)
     last = 0
@@ -335,7 +312,6 @@ def whisperMessage(username, text):
     except Exception as e:
         print (e)
 
-
 def writeMessage(text, channel):
     textLen = len(text)
     last = 0
@@ -346,7 +322,6 @@ def writeMessage(text, channel):
         s.send(bytes("PRIVMSG {} :{}\r\n".format(channel, text[last:current]), 'UTF-8'))
         last = current
         current += 400
-
 
 def loadCustomCommands():
     try:
@@ -371,9 +346,6 @@ def loadRegex():
     except:
         print ("Could not load database. \n{}".format(sys.exc_info()))
 
-
-
-
 def updateUserDataBase(senderName):
     global database
 
@@ -395,7 +367,6 @@ def updateUserDataBase(senderName):
         database['names'][senderName]['lines'] = 1
         database['names'][senderName]['activity'] = 1
         database['names'][senderName]['last-active'] = currentDate
-
 
 def receiveData():
     global TIME
@@ -422,7 +393,7 @@ def receiveData():
     allCommands['add'] = [addCommand, bot_mod, "", False]
     allCommands['start'] = [start, bot_mod, "", False]
     allCommands['enter'] = [enterGiveaway, [], False]
-    allCommands['winner'] = [winner, bot_mod, False]
+    # allCommands['winner'] = [winner, bot_mod, False]
     allCommands['commands'] = [commandList, [], False]
 
     loadCustomCommands()
@@ -430,7 +401,12 @@ def receiveData():
     # reg = re.compile("^(?=.*?regex).*$")
 
     while 1:
-        somebytes = s.recv(1024).decode('UTF-8')
+        data = s.recv(1024)
+
+        if len(data) == 0:
+            print ("Connection was closed.")
+
+        somebytes = data.decode('UTF-8')
         readbuffer += readbuffer + somebytes
         temp = str.split(readbuffer, '\r\n')
         readbuffer = temp.pop()
@@ -503,8 +479,8 @@ def receiveData():
                 else:
                     print (line)
             if (line[0] == "PING"):
+                print ("Got PING PONG", (datetime.now() - TIME))
                 s.send(bytes("PONG {}\r\n".format(line[1]), 'UTF-8'))
-
 
 def receiveTeamData():
     junkbuffer = ""
@@ -522,6 +498,7 @@ def receiveTeamData():
                 print ("PING PONG")
                 t.send(bytes("PONG {}\r\n".format(line[1]), 'UTF-8'))
 
+print ("Creating threads")
 
 s = socket.socket()
 s.connect((HOST, PORT))
@@ -532,41 +509,52 @@ s.send(bytes("CAP REQ :twitch.tv/commands\r\n", 'UTF-8'))
 s.send(bytes("CAP REQ :twitch.tv/membership\r\n", 'UTF-8'))
 s.send(bytes("JOIN #{}\r\n".format(CHANNEL), 'UTF-8'))
 
-t = socket.socket()
-t.connect(("199.9.253.119", 443))
-t.send(bytes("PASS oauth:{}\r\n".format(PASSWORD), 'UTF-8'))
-t.send(bytes("NICK {}\r\n".format(NICK), 'UTF-8'))
-t.send(bytes("USER {} {} bla :{}\r\n".format(IDENT, HOST, REALNAME), 'UTF-8'))
+print ("Logged in Twitch")
+
+# t = socket.socket()
+# t.connect(("199.9.253.119", 443))
+
+print ("Logged in Twitch!")
+
+# t.send(bytes("PASS oauth:{}\r\n".format(PASSWORD), 'UTF-8'))
+# t.send(bytes("NICK {}\r\n".format(NICK), 'UTF-8'))
+# t.send(bytes("USER {} {} bla :{}\r\n".format(IDENT, HOST, REALNAME), 'UTF-8'))
 # t.send(bytes("JOIN #{}\r\n".format("_apostolique_1435426130074"), 'UTF-8'))
 # t.send(bytes("PRIVMSG #jtv :/w {} {}\r\n".format("apostolique", "Hello World!"), 'UTF-8'))
+
+#print ("Logged in whisper server")
 
 socketThread = Thread(target=receiveData)
 socketThread.start()
 
-teamThread = Thread(target=receiveData)
-teamThread.start()
+# teamThread = Thread(target=receiveData)
+# teamThread.start()
+
+print ("Started")
 
 while 1:
     userInput = input()
     if userInput == "quit":
         try:
-            print(database['names'])
+            #print(database['names'])
             with open(CHATDATABASE, 'w') as fp:
                 json.dump(database, fp)
+            print('Saved')
         except:
             print ("Could not save. \n{}".format(sys.exc_info()))
 
         try:
             s.close()
-            t.close()
+            #t.close()
         except:
             print ("Could not end the connection.")
         break
     elif userInput == "save":
         try:
-            print(database['names'])
+            #print(database['names'])
             with open(CHATDATABASE, 'w') as fp:
                 json.dump(database, fp)
+            print('Saved')
         except:
             print ("Could not save. \n{}".format(sys.exc_info()))
     elif userInput == "load":
@@ -585,3 +573,4 @@ while 1:
         s.send(bytes("{}\r\n".format(userInput[1:-1]), 'UTF-8'))
     else:
         s.send(bytes("PRIVMSG #{} :{}\r\n".format(CHANNEL, userInput), 'UTF-8'))
+print('Ended')
