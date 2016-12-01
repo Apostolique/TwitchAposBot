@@ -31,6 +31,8 @@ import threading
 
 print ("Starting")
 
+KEEP_RUNNING = True
+
 database = {}
 allCommands = {}
 allRegex = {}
@@ -368,11 +370,21 @@ def updateUserDataBase(senderName):
         database['names'][senderName]['activity'] = 1
         database['names'][senderName]['last-active'] = currentDate
 
+def saveDatabase():
+    try:
+        #print(database['names'])
+        with open(CHATDATABASE, 'w') as fp:
+            json.dump(database, fp)
+        print('Saved')
+    except:
+        print ("Could not save. \n{}".format(sys.exc_info()))
+
 def receiveData():
     global TIME
     global allCommands
     global allRegex
     global bot_mod
+    global KEEP_RUNNING
     TIME = datetime.now()
     readbuffer = ""
 
@@ -400,7 +412,7 @@ def receiveData():
     loadRegex()
     # reg = re.compile("^(?=.*?regex).*$")
 
-    while 1:
+    while KEEP_RUNNING:
         data = s.recv(1024)
 
         if len(data) == 0:
@@ -481,6 +493,7 @@ def receiveData():
             if (line[0] == "PING"):
                 print ("Got PING PONG", (datetime.now() - TIME))
                 s.send(bytes("PONG {}\r\n".format(line[1]), 'UTF-8'))
+    print ("Done thread.")
 
 def receiveTeamData():
     junkbuffer = ""
@@ -535,28 +548,18 @@ print ("Started")
 while 1:
     userInput = input()
     if userInput == "quit":
-        try:
-            #print(database['names'])
-            with open(CHATDATABASE, 'w') as fp:
-                json.dump(database, fp)
-            print('Saved')
-        except:
-            print ("Could not save. \n{}".format(sys.exc_info()))
+        saveDatabase()
 
         try:
+            KEEP_RUNNING = False
+            s.shutdown(socket.SHUT_WR)
             s.close()
             #t.close()
         except:
             print ("Could not end the connection.")
         break
     elif userInput == "save":
-        try:
-            #print(database['names'])
-            with open(CHATDATABASE, 'w') as fp:
-                json.dump(database, fp)
-            print('Saved')
-        except:
-            print ("Could not save. \n{}".format(sys.exc_info()))
+        saveDatabase()
     elif userInput == "load":
         loadCustomCommands()
     elif userInput == "uptime":
